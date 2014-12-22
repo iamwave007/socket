@@ -24,12 +24,14 @@
     <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
     <script>
       var socket = io();
+      var name="james";
+
       $('form').submit(function(){
-        socket.emit('chat message',$('#m').val());
+        socket.emit(name,$('#m').val());
         $('#m').val('');
         return false;
       })
-      socket.on('chat message',function(msg){
+      socket.on(name,function(msg){
         $('#messages').append($('<li>').text(msg));
       });
     </script>
