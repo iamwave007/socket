@@ -14,10 +14,12 @@ io.on('connection',function(socket){
   socket.on('james',function(msg,second){
     io.emit('james', msg);
     console.log(second);
+    console.log(socket.id);
   });
 
-  socket.on('disconnect',function(dd){
-    console.log(dd)
+
+  socket.on('disconnect',function(){
+    console.log(socket.id);
     console.log("disconnected");
   });
 
