@@ -23,8 +23,6 @@ io.on('connection',function(socket){
     console.log("disconnected");
   });
 
-  socket.broadcast.emit("hello");
-  //io.emit("james","io.emit works")
 
 });
 
