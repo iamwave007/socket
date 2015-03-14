@@ -17,13 +17,15 @@
 
     <script>
       var socket=io.connect("http://localhost/chat");
+      // var socket=io.connect("http://localhost");
       // var socket=io.connect("http://sockettesting.nodejitsu.com:80");
       
-      // var socket2=io.connect('http://localhost/chat');
-      
+      socket.on("connect",function(){ // "connect" is a default event
+        //socket.send("yo")     //socket.send     sends to "message" event
+      })
       
       $('form').submit(function(){
-        socket.emit('chat message', $('#m').val());
+        socket.emit('chat message', $('#m').val(),console.log("what"));
         $('#m').val('');
         return false;
       });

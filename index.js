@@ -10,27 +10,38 @@ app.get('/',function(req,res){
 var chat=io.of('/chat')
 io.of("/chat").on("connection",function(socket){
   console.log('a user connected');
-  socket.on("chat message",function(msg){
-    console.log("message: "+msg)
-    // socket.emit("chat message",msg); // √√X only working sending back to itself, the socket where it's from!!!
-    // io.of("/chat").emit("chat message",msg);// √√ works same way as the line below
-    //chat.emit("chat message",msg); // √√√ working, to all io.of("/chat")
-    //io.emit("chat message",msg); // XXXX not working due to of('/chat') missing
-  })
+  // socket.on("chat message",function(msg,fn){
+  //   console.log("message: "+msg)
+  //   chat.emit("chat message",msg);
+  //   socket.broadcast.emit("chat message","insidecall")
+  // })
   socket.on("disconnect",function(){
     console.log("disconnected")
+  });
+
+  // socket.broadcast.emit("chat message","insidecall") // just not to itself!!!
+
+  // var tweets = setInterval(function () {
+  //   socket.volatile.emit('chat message', "tweeting");
+  // }, 1000);
+  // setTimeout(function(){clearInterval(tweets);},1000*10)
+
+  socket.on("message",function(data){ // "message" is a default event
+    console.log(data)
   })
 })
 
-// io.on("connection",function(socket){
-  // console.log('a user connected');
-  // socket.on("chat message",function(msg){
-  //   console.log("message: "+msg)
-  //   io.emit("chat message",msg);
-  // })
-  // socket.on("disconnect",function(){
-  //   console.log("disconnected")
-  // })
+
+
+// io.sockets.on("connection",function(socket){
+//   console.log('a user connected');
+//   socket.on("chat message",function(msg){
+//     console.log("message: "+msg)
+//     io.emit("chat message",msg);
+//   })
+//   socket.on("disconnect",function(){
+//     console.log("disconnected")
+//   })
 // })
 
 http.listen(4000,function(){
