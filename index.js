@@ -1,52 +1,22 @@
-// NOTE: A server that integrates with (or mounts on) 
-// the Node.JS HTTP Server: socket.io
-
-var app = require("express")();
-var http = require("http").Server(app);
-var io = require('socket.io')(http);
-// initialized "socket.io" by passing "http server" object
+var app=require('express')();
+var http=require('http').Server(app);
+var io=require('socket.io')(http);
 
 app.get('/',function(req,res){
-  res.sendFile(__dirname + '/index.html');
-});
-
-io.on('connection',function(socket){
-  socket.on('james',function(msg,second){
-    io.emit('james', msg);
-    console.log(second);
-    console.log(socket.id);
-  });
-
-
-  socket.on('disconnect',function(){
-    console.log(socket.id);
-    console.log("disconnected");
-  });
-
-
-});
-
-// io.sockets.emit('hi','everyone');
-
-
-http.listen(8000,function(){
-  console.log("listening here! 8000");
+  
+  res.sendFile(__dirname+"/index.html");
 })
 
+io.on("connection",function(socket){
+  console.log('a user connected');
+  // console.log(io)
+  socket.on("chat message",function(msg){
+    console.log("message: "+msg)
+    io.emit("chat message",msg);
+    
+  })
+})
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+http.listen(4000,function(){
+  console.log("listening on *:4000");
+})
