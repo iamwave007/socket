@@ -24,6 +24,17 @@ io.on("connection",function(socket){
     // io.emit("roomName","bypass?")
   })
 
+  socket.on("roomControl",function(controlInfo){
+    //controlInfo=["action","roomName","eventName","eventInfo"]
+    if(controlInfo[0]=="join"){
+      socket.join(controlInfo[1]);
+    }else if(controlInfo[0]=="leave"){
+      socket.leave(controlInfo[1]);
+    }else if(controlInfo[0]=="message"){
+      io.to(controlInfo[1]).emit(controlInfo[3])
+    }
+  })
+
   socket.on("disconnect",function(){
     io.to("fff").emit("roomName","someone left")
     console.log("disconnected")
