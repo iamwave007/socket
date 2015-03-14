@@ -10,20 +10,30 @@
   </head>
 
   <body>
+    <input id="roomName" placeholder="type room name here">
+    <button id="room">Join Room</button>
     <ul id="messages"></ul>
     <form action="">
       <input id="m" autocomplete="off" /><button>Send</button>
     </form>
-
     <script>
-      var socket=io.connect("http://localhost/chat");
-      // var socket=io.connect("http://localhost");
+      // var socket=io.connect("http://localhost/chat");
+      var socket=io.connect("http://localhost");
       // var socket=io.connect("http://sockettesting.nodejitsu.com:80");
       
-      socket.on("connect",function(){ // "connect" is a default event
-        //socket.send("yo")     //socket.send     sends to "message" event
+      // socket.on("connect",function(){ // "connect" is a default event
+      //   //socket.send("yo")     //socket.send     sends to "message" event
+      // })
+    
+      $("#room").click(function(){
+        $("#room").attr("disabled",true)
+        socket.send($("#roomName").val())
+        socket.on("roomName",function(data){
+          alert(data)
+        })
       })
       
+
       $('form').submit(function(){
         socket.emit('chat message', $('#m').val(),console.log("what"));
         $('#m').val('');
@@ -32,6 +42,7 @@
       socket.on('chat message', function(msg){
         $('#messages').append($('<li>').text(msg));
       });
+
     </script>
 
   </body>
