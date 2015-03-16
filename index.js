@@ -1,70 +1,80 @@
-var app=require('express')();
-var http=require('http').Server(app);
-var io=require('socket.io')(http);
 
-app.get('/',function(req,res){
-  
-  res.sendFile(__dirname+"/index.html");
-})
+io = require('socket.io').listen(4000);
 
-// var chat=io.of('/chat')
-// io.of("/chat").
+var unpairedSocketA=null;
+var unpairedSocketB=null;
+
+
 io.on("connection",function(socket){
   console.log('a user connected');
-  // socket.on("chat message",function(msg,fn){
-  //   console.log("message: "+msg)
-  //   chat.emit("chat message",msg);
-  //   socket.broadcast.emit("chat message","insidecall")
-  // })
+  if(unpairedSocketA==null){unpairedSocketA=socket}
+  else if(unpairedSocketB==null){unpairedSocketB=socket}
+  if(unpairedSocketA!=null&&unpairedSocketB!=null){
+    pair(unpairedSocketA,unpairedSocketB);
+    unpairedSocketA=null;
+    unpairedSocketB=null;
+  }
 
-  socket.on("message",function(roomName){
-    console.log(roomName);
-    socket.join(roomName);
-    io.to(roomName).emit("roomName","what");
-    // io.emit("roomName","bypass?")
-  })
 
-  socket.on("roomControl",function(controlInfo){
-    //controlInfo=["action","roomName","eventName","eventInfo"]
-    if(controlInfo[0]=="join"){
-      socket.join(controlInfo[1]);
-    }else if(controlInfo[0]=="leave"){
-      socket.leave(controlInfo[1]);
-    }else if(controlInfo[0]=="message"){
-      io.to(controlInfo[1]).emit(controlInfo[3])
+})
+
+
+function pair(socketA, socketB){
+  console.log("paring");
+  try {
+    socketA.emit("event",{type: 'init'});
+  } catch (e) {
+    console.log('Could not send init');
+  }
+
+  socketA.on('event', function(message) {
+    // console.log("from A: ")
+    // console.log(message)
+    switch (message.type) {
+      case 'offer':
+        try {
+          // console.log(message)
+          socketB.emit("event",message);
+        } catch (e) {
+          console.log('Could not send SDP_Stage_2');
+        }
+        break;
+      case 'ice':
+        //relay all ice messages
+        try {
+          socketB.emit("event",{});
+        } catch (e) {
+          console.log('Could not send ice to B');
+        }
+        break;
     }
-  })
+  });
+  socketB.on('event', function(message) {
+    // console.log("from B: ")
+    // console.log(message)
+    switch (message.type) {
+      case 'answer':
+        // console.log(message);
+        try {
+          socketA.emit("event",message);
+        } catch (e) {
+          console.log('Could not send SDP_Stage_3');
+        }
+      break;
 
-  socket.on("disconnect",function(){
-    io.to("fff").emit("roomName","someone left")
-    console.log("disconnected")
+      case 'icecandidate':
+        console.log("from B ICE: ")
+        console.log(message)
+        try {
+          socketA.emit("event",message);
+        } catch (e) {
+          console.log('Could not send ice to A');
+        }
+      break;
+    }
   });
 
-  // socket.broadcast.emit("chat message","insidecall") // just not to itself!!!
-
-  // var tweets = setInterval(function () {
-  //   socket.volatile.emit('chat message', "tweeting");
-  // }, 1000);
-  // setTimeout(function(){clearInterval(tweets);},1000*10)
-
-  // socket.on("message",function(data){ // "message" is a default event
-  //   console.log(data)
-  // })
-})
+}
 
 
 
-// io.sockets.on("connection",function(socket){
-//   console.log('a user connected');
-//   socket.on("chat message",function(msg){
-//     console.log("message: "+msg)
-//     io.emit("chat message",msg);
-//   })
-//   socket.on("disconnect",function(){
-//     console.log("disconnected")
-//   })
-// })
-
-http.listen(4000,function(){
-  console.log("listening on *:4000");
-})

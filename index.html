@@ -1,49 +1,95 @@
 <!doctype html>
 <html>
   <head>
-  <title>
-    Socket.io chat
-  </title>
   <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
   <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
-
   </head>
-
   <body>
-    <input id="roomName" placeholder="type room name here">
-    <button id="room">Join Room</button>
-    <ul id="messages"></ul>
-    <form action="">
-      <input id="m" autocomplete="off" /><button>Send</button>
-    </form>
-    <script>
-      // var socket=io.connect("http://localhost/chat");
-      var socket=io.connect("http://localhost");
-      // var socket=io.connect("http://sockettesting.nodejitsu.com:80");
-      
-      // socket.on("connect",function(){ // "connect" is a default event
-      //   //socket.send("yo")     //socket.send     sends to "message" event
-      // })
+<input id="connect" disabled type="button" value="connect">
+<br>
+<video id="localVideo" autoplay></video>
+<video id="remoteVideo" autoplay></video>
+
+<script>
+  var stun="stun:stun.l.google.com:19302"
+  
+  //polyfills
+    var RTCPeerConnection = window.RTCPeerConnection || window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
+    var RTCSessionDescription = window.RTCSessionDescription || window.webkitRTCSessionDescription || window.mozRTCSessionDescription;
+    var RTCIceCandidate = window.RTCIceCandidate || window.webkitRTCIceCandidate || window.mozRTCIceCandidate;
+    navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+  
+
+  var localStream;
+  navigator.getUserMedia({video: true,audio:true}, successCallback, errorHandler);
+  function successCallback(stream){
+    localStream=stream;
+    localVideo.src = URL.createObjectURL(stream)
     
-      $("#room").click(function(){
-        $("#room").attr("disabled",true)
-        socket.send($("#roomName").val())
-        socket.on("roomName",function(data){
-          alert(data)
-        })
-      })
-      
+    var socket=io.connect("http://localhost:4000");
+    socket.on("event",function(message){
+      //console.log(message)
 
-      $('form').submit(function(){
-        socket.emit('chat message', $('#m').val(),console.log("what"));
-        $('#m').val('');
-        return false;
-      });
-      socket.on('chat message', function(msg){
-        $('#messages').append($('<li>').text(msg));
-      });
+      switch(message.type){
+        case 'init':
+          peerConnection.createOffer(function(offer) {
+            // console.log(offer)
+            peerConnection.setLocalDescription(offer, function() {               
+              socket.emit("event",{type:offer.type,sdp:offer.sdp})
+            }, errorHandler);
+          }, errorHandler);
+        break;
 
-    </script>
+        case 'offer':
+          peerConnection.setRemoteDescription(new RTCSessionDescription(message), function() {
+            peerConnection.createAnswer(function(answer) {
+              peerConnection.setLocalDescription(answer, function() {                
+                socket.emit("event",{type:answer.type,sdp:answer.sdp})
+              }, errorHandler);
+            }, errorHandler);
+          }, errorHandler);
+        break;
+
+        case 'answer':
+          peerConnection.setRemoteDescription(new RTCSessionDescription(message), successHandler, errorHandler);
+        break;
+
+        case 'icecandidate':
+          peerConnection.addIceCandidate(new RTCIceCandidate(message), successHandler, errorHandler);
+        break;
+      }
+    })
+
+
+    var peerConnection = new RTCPeerConnection({
+      'iceServers': [{'url': stun}]
+    });
+
+    peerConnection.onicecandidate = function(message) {
+      if (message.candidate){
+        console.log(message)
+        socket.emit("event",{type:"icecandidate",candidate:message.candidate.candidate})
+      }
+    };
+    
+    peerConnection.onaddstream = function(event) {
+      remoteVideo.src = URL.createObjectURL(event.stream);
+    };
+    
+    peerConnection.addStream(stream);
+
+  }
+
+
+
+  function errorHandler() {
+    console.log(arguments);
+  }
+  
+  function successHandler() {
+    console.log(arguments);
+  }
+</script>
 
   </body>
 </html>
